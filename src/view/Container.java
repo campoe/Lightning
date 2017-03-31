@@ -8,10 +8,12 @@
 
 package view;
 
+import java.awt.*;
+
 /**
  * Created by Coen on 17-3-2017.
  */
-public class Game implements Runnable {
+public class Container implements Runnable {
 
     private boolean running = false;
 
@@ -19,12 +21,15 @@ public class Game implements Runnable {
     private float scale;
     private String title;
     private Window window;
+    private Canvas canvas;
+    private Renderer renderer;
+    private InputHandler inputHandler;
 
     public static void main(String[] args) {
-        new Game();
+        new Container();
     }
 
-    public Game() {
+    public Container() {
         width = 320;
         height = 240;
         scale = 3f;
@@ -34,6 +39,10 @@ public class Game implements Runnable {
 
     public void start() {
         window = new Window(width, height, scale, title, this);
+        canvas = window.getCanvas();
+        inputHandler = new InputHandler(this);
+        renderer = new Renderer();
+        addRenderables();
         running = true;
         Thread thread = new Thread(this);
         thread.start();
@@ -43,14 +52,22 @@ public class Game implements Runnable {
 
     }
 
+    public void addRenderables() {
+        if (renderer == null) {
+            renderer = new Renderer();
+        }
+        Image image = new Image("background.png");
+        renderer.addImage(image);
+    }
+
     public void run() {
         double time;
         double lastTime = System.nanoTime() / 1000000000.0;
         double passed;
         double delta = 0;
         double rate = 0;
+        int frames = 0;
         int fps = 0;
-        int ticks = 0;
         while (running) {
             boolean render = false;
             time = System.nanoTime() / 1000000000.0;
@@ -65,14 +82,15 @@ public class Game implements Runnable {
                 //ticks / updates
                 if (rate >= 1.0) {
                     rate = 0;
-                    ticks = fps;
-                    fps = 0;
+                    fps = frames;
+                    frames = 0;
                 }
             }
             if (render) {
                 //render
-                fps++;
-                window.render();
+                window.render(renderer);
+                frames++;
+                System.out.println("FPS: " + fps);
             } else {
                 try {
                     Thread.sleep(2);
@@ -122,6 +140,10 @@ public class Game implements Runnable {
 
     public final Window getWindow() {
         return window;
+    }
+
+    public final Canvas getCanvas() {
+        return canvas;
     }
 
 }
